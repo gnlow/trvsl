@@ -19,34 +19,39 @@ function* c<T, S>(
     state: S,
     children: T[] = [],
 ): Generator<T, undefined, undefined> {
-    let next: number | undefined = undefined
-    const toYield: T[] = []
-    control({
-        current,
+    while (children.length >= 0) {
+        console.log(children)
+        let next: T | undefined = undefined
+        const toYield: T[] = []
+        control({
+            current,
 
-        getState: () => state,
-        setState: (s: S) => state = s,
+            getState: () => state,
+            setState: (s: S) => state = s,
 
-        getChildren: () => children,
-        setChildren: (t: T[]) => children = t,
+            getChildren: () => children,
+            setChildren: (t: T[]) => children = t,
 
-        terminate: () => next = undefined,
-        send: (v: T) => toYield.push(v),
+            terminate: () => next = undefined,
+            send: (v: T) => toYield.push(v),
 
-        select: (index: number) => next = index
-    })
+            select: (index: number) => {
+                next = children.splice(index, 1)[0]
+            }
+        })
 
-    yield* toYield
-    if (next == undefined || children.length == 0) {
-        return
-    } else {
-        yield* c(
-            control,
-            children[next],
-            state,
-            children.toSpliced(next, 1)
-        )
+        yield* toYield
+        if (next == undefined) {
+            return
+        } else {
+            yield* c(
+                control,
+                next,
+                state
+            )
+        }    
     }
+    
 }
 
 console.log([...c(
@@ -60,3 +65,5 @@ console.log([...c(
     0 as number,
     [1, 2]
 )])
+
+;
